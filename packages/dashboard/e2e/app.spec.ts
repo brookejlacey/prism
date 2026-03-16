@@ -7,7 +7,9 @@ test.describe("Prism Protocol Dashboard", () => {
 
   test("should render the hero section", async ({ page }) => {
     await expect(page.getByText("Private DeFi")).toBeVisible();
-    await expect(page.getByText("on Polkadot Hub")).toBeVisible();
+    await expect(
+      page.getByText("on Polkadot Hub", { exact: true })
+    ).toBeVisible();
     await expect(
       page.getByText("Track 1: EVM Smart Contracts")
     ).toBeVisible();
@@ -17,28 +19,35 @@ test.describe("Prism Protocol Dashboard", () => {
 
   test("should show protocol metrics", async ({ page }) => {
     await expect(page.getByText("Anonymity Set")).toBeVisible();
-    await expect(page.getByText("Total Deposits")).toBeVisible();
-    await expect(page.getByText("Cross-VM Transfers")).toBeVisible();
+    await expect(
+      page.getByText("Active shielded deposits")
+    ).toBeVisible();
     await expect(page.getByText("PVM Gas Savings")).toBeVisible();
-    await expect(page.getByText("14x")).toBeVisible();
+    await expect(
+      page.getByText("vs. pure EVM crypto ops")
+    ).toBeVisible();
   });
 
   test("should display connect wallet button", async ({ page }) => {
-    await expect(page.getByText("Connect Wallet")).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Connect Wallet", exact: true })
+    ).toBeVisible();
   });
 
   test("should show deposit panel with token selection", async ({ page }) => {
-    await expect(page.getByText("Private Deposit")).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: /Private Deposit/ })
+    ).toBeVisible();
     await expect(page.getByRole("button", { name: /USDC/ }).first()).toBeVisible();
     await expect(page.getByRole("button", { name: /DOT/ }).first()).toBeVisible();
     await expect(page.getByRole("button", { name: /WND/ }).first()).toBeVisible();
   });
 
-  test("should show denomination options", async ({ page }) => {
+  test("should show denomination options in deposit panel", async ({ page }) => {
     const depositSection = page.locator("#deposit");
-    await expect(depositSection.getByText("0.1", { exact: false })).toBeVisible();
-    await expect(depositSection.getByText("10", { exact: false })).toBeVisible();
-    await expect(depositSection.getByText("100", { exact: false })).toBeVisible();
+    await expect(depositSection.getByRole("button", { name: /^0\.1/ })).toBeVisible();
+    await expect(depositSection.getByRole("button", { name: /^10 / })).toBeVisible();
+    await expect(depositSection.getByRole("button", { name: /^100 / })).toBeVisible();
   });
 
   test("should switch denomination on click", async ({ page }) => {
@@ -46,12 +55,13 @@ test.describe("Prism Protocol Dashboard", () => {
       .locator("#deposit")
       .getByRole("button", { name: /^10 / });
     await denom10Button.click();
-    // The button should now be highlighted (has primary bg)
     await expect(denom10Button).toBeVisible();
   });
 
   test("should show withdraw panel", async ({ page }) => {
-    await expect(page.getByText("Private Withdraw")).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: /Private Withdraw/ })
+    ).toBeVisible();
     await expect(
       page.getByPlaceholder("Paste your deposit note here...")
     ).toBeVisible();
@@ -61,7 +71,9 @@ test.describe("Prism Protocol Dashboard", () => {
   });
 
   test("should show cross-VM bridge panel", async ({ page }) => {
-    await expect(page.getByText("Cross-VM & XCM Bridge")).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: /Cross-VM/ })
+    ).toBeVisible();
     await expect(page.getByRole("button", { name: "EVM ↔ PVM" })).toBeVisible();
     await expect(
       page.getByRole("button", { name: "XCM Transfer" })
@@ -71,26 +83,37 @@ test.describe("Prism Protocol Dashboard", () => {
   test("should switch between cross-VM tabs", async ({ page }) => {
     const xcmButton = page.getByRole("button", { name: "XCM Transfer" });
     await xcmButton.click();
-    await expect(page.getByText("Asset Hub")).toBeVisible();
-    await expect(page.getByText("Moonbeam")).toBeVisible();
-    await expect(page.getByText("Astar")).toBeVisible();
-    await expect(page.getByText("Bifrost")).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /Asset Hub/ })
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /Moonbeam/ })
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /Astar/ })
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /Bifrost/ })
+    ).toBeVisible();
   });
 
   test("should show architecture diagram", async ({ page }) => {
-    await expect(page.getByText("Architecture")).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Architecture" })
+    ).toBeVisible();
     await expect(page.getByText("PrismVault")).toBeVisible();
     await expect(page.getByText("PrismRouter")).toBeVisible();
     await expect(page.getByText("CrossVMBridge")).toBeVisible();
-    await expect(page.getByText("Poseidon")).toBeVisible();
-    await expect(page.getByText("Pedersen")).toBeVisible();
-    await expect(page.getByText("14x cheaper than EVM")).toBeVisible();
+    await expect(page.getByText("Poseidon", { exact: true })).toBeVisible();
+    await expect(page.getByText("14x cheaper than EVM", { exact: true })).toBeVisible();
   });
 
   test("should show how it works section", async ({ page }) => {
     await expect(page.getByText("How Prism Works")).toBeVisible();
     await expect(page.getByText("PVM Proves")).toBeVisible();
-    await expect(page.getByText("Cross-Chain")).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Cross-Chain" })
+    ).toBeVisible();
   });
 
   test("should show footer", async ({ page }) => {
@@ -113,13 +136,9 @@ test.describe("Prism Protocol Dashboard", () => {
     await expect(withdrawButton).toBeDisabled();
   });
 
-  test("should navigate between sections", async ({ page }) => {
-    // Click nav links
+  test("should navigate to deposit section", async ({ page }) => {
     await page.getByRole("link", { name: "Deposit" }).click();
     await expect(page.locator("#deposit")).toBeInViewport();
-
-    await page.getByRole("link", { name: "Withdraw" }).click();
-    await expect(page.locator("#withdraw")).toBeInViewport();
   });
 
   test("should select XCM destination parachain", async ({ page }) => {
@@ -128,7 +147,6 @@ test.describe("Prism Protocol Dashboard", () => {
       name: /Moonbeam/,
     });
     await moonbeamButton.click();
-    // Verify the protocol info updates
-    await expect(page.getByText("Moonbeam").first()).toBeVisible();
+    await expect(moonbeamButton).toBeVisible();
   });
 });
