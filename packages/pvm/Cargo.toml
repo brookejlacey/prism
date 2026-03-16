@@ -16,12 +16,6 @@ ark-std = "0.4"
 sha3 = "0.10"
 hex = "0.4"
 
-[dev-dependencies]
-criterion = "0.5"
-
-[[bench]]
-name = "crypto_bench"
-harness = false
 
 [profile.release]
 opt-level = 3

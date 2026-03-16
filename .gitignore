@@ -11,3 +11,4 @@ coverage/
 target/
 test-results/
 playwright-report/
+.vercel
