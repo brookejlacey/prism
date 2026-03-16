@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { connectWallet, switchToPolkadotHub, truncateAddress, type WalletState } from "@/lib/wallet";
+import { connectWallet, truncateAddress, type WalletState } from "@/lib/wallet";
 
 interface HeaderProps {
   wallet: WalletState | null;
@@ -14,7 +14,6 @@ export default function Header({ wallet, onConnect }: HeaderProps) {
   async function handleConnect() {
     setConnecting(true);
     try {
-      await switchToPolkadotHub();
       const w = await connectWallet();
       onConnect(w);
     } catch (err: any) {

@@ -22,46 +22,73 @@ const POLKADOT_HUB_TESTNET = {
   blockExplorerUrls: ["https://blockscout-polkadothub-testnet.parity-testnet.parity.io"],
 };
 
-export async function connectWallet(): Promise<WalletState> {
-  if (!window.ethereum) {
-    throw new Error("MetaMask not found. Please install MetaMask.");
+/**
+ * Find MetaMask specifically — other Polkadot wallet extensions
+ * (SubWallet, Talisman) inject their own window.ethereum and break
+ * standard EVM connect flows with evmAsk.js errors.
+ */
+function getProvider(): any {
+  if (!window.ethereum) return null;
+
+  // If MetaMask is the only provider, use it directly
+  if (window.ethereum.isMetaMask && !window.ethereum.providers) {
+    return window.ethereum;
   }
 
-  const provider = new ethers.BrowserProvider(window.ethereum);
+  // Multiple providers injected — find MetaMask
+  if (window.ethereum.providers?.length) {
+    const metamask = window.ethereum.providers.find((p: any) => p.isMetaMask);
+    if (metamask) return metamask;
+  }
+
+  // Fallback to whatever is there
+  return window.ethereum;
+}
+
+export async function connectWallet(): Promise<WalletState> {
+  const eth = getProvider();
+  if (!eth) {
+    throw new Error("No EVM wallet found. Install MetaMask.");
+  }
+
+  const provider = new ethers.BrowserProvider(eth);
   const accounts = await provider.send("eth_requestAccounts", []);
 
   if (accounts.length === 0) {
     throw new Error("No accounts found");
   }
 
-  const signer = await provider.getSigner();
-  const network = await provider.getNetwork();
-
-  return {
-    connected: true,
-    address: accounts[0],
-    chainId: Number(network.chainId),
-    provider,
-    signer,
-  };
-}
-
-export async function switchToPolkadotHub(): Promise<void> {
-  if (!window.ethereum) return;
-
+  // Try to switch chain after connecting — don't block if it fails
   try {
-    await window.ethereum.request({
+    await eth.request({
       method: "wallet_switchEthereumChain",
       params: [{ chainId: POLKADOT_HUB_TESTNET.chainId }],
     });
   } catch (switchError: any) {
     if (switchError.code === 4902) {
-      await window.ethereum.request({
-        method: "wallet_addEthereumChain",
-        params: [POLKADOT_HUB_TESTNET],
-      });
+      try {
+        await eth.request({
+          method: "wallet_addEthereumChain",
+          params: [POLKADOT_HUB_TESTNET],
+        });
+      } catch {
+        // user rejected — continue on whatever chain they're on
+      }
     }
   }
+
+  // Re-create provider after potential chain switch
+  const freshProvider = new ethers.BrowserProvider(eth);
+  const signer = await freshProvider.getSigner();
+  const network = await freshProvider.getNetwork();
+
+  return {
+    connected: true,
+    address: accounts[0],
+    chainId: Number(network.chainId),
+    provider: freshProvider,
+    signer,
+  };
 }
 
 export function truncateAddress(address: string): string {
