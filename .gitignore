@@ -1,0 +1,13 @@
+node_modules/
+dist/
+.next/
+artifacts/
+cache/
+typechain-types/
+coverage/
+.env
+.env.local
+*.log
+target/
+test-results/
+playwright-report/

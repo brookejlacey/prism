@@ -1,0 +1,21 @@
+{
+  "name": "@prism/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy": "hardhat run scripts/deploy.ts",
+    "build": "hardhat compile"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@openzeppelin/contracts": "^5.2.0",
+    "hardhat": "^2.22.0",
+    "ethers": "^6.13.0",
+    "typescript": "^5.7.0",
+    "ts-node": "^10.9.0",
+    "@types/node": "^22.0.0",
+    "@types/mocha": "^10.0.0"
+  }
+}
