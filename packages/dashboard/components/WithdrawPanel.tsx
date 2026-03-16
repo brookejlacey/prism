@@ -16,8 +16,6 @@ export default function WithdrawPanel({ wallet }: WithdrawPanelProps) {
   async function handleWithdraw() {
     if (!wallet?.connected || !noteInput || !recipientAddress) return;
     setWithdrawing(true);
-
-    // Simulate withdrawal
     await new Promise((r) => setTimeout(r, 3000));
     setSuccess(true);
     setWithdrawing(false);
@@ -25,52 +23,46 @@ export default function WithdrawPanel({ wallet }: WithdrawPanelProps) {
 
   return (
     <div id="withdraw" className="prism-card">
-      <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-        <span className="w-6 h-6 rounded-lg bg-[var(--prism-secondary)] flex items-center justify-center text-xs">
-          ↑
-        </span>
+      <h2 className="text-xs uppercase tracking-widest text-[var(--prism-text-muted)] mb-5">
+        <span className="text-[var(--prism-accent)] mr-2">&uarr;</span>
         Private Withdraw
       </h2>
 
-      <div className="space-y-4">
+      <div className="space-y-5">
         <div>
-          <label className="text-xs text-[var(--prism-text-muted)] mb-2 block">
-            Deposit Note
-          </label>
+          <div className="text-[10px] uppercase tracking-widest text-[var(--prism-text-muted)] mb-2">Note</div>
           <input
             type="text"
             value={noteInput}
             onChange={(e) => setNoteInput(e.target.value)}
-            placeholder="Paste your deposit note here..."
-            className="prism-input font-mono text-xs"
+            placeholder="paste deposit note..."
+            className="prism-input"
           />
         </div>
 
         <div>
-          <label className="text-xs text-[var(--prism-text-muted)] mb-2 block">
-            Recipient Address
-          </label>
+          <div className="text-[10px] uppercase tracking-widest text-[var(--prism-text-muted)] mb-2">Recipient</div>
           <input
             type="text"
             value={recipientAddress}
             onChange={(e) => setRecipientAddress(e.target.value)}
-            placeholder="0x... (can be a different address than depositor)"
-            className="prism-input font-mono text-xs"
+            placeholder="0x... (can differ from depositor)"
+            className="prism-input"
           />
         </div>
 
-        <div className="bg-[var(--prism-surface-light)] rounded-xl p-4 text-xs text-[var(--prism-text-muted)] space-y-2">
+        <div className="border-t border-[var(--prism-border)] pt-4 text-[11px] text-[var(--prism-text-muted)] space-y-1.5">
           <div className="flex justify-between">
-            <span>Privacy Level</span>
-            <span className="text-[var(--prism-success)]">Full Unlinkability</span>
+            <span>privacy</span>
+            <span className="text-[var(--prism-success)]">full unlinkability</span>
           </div>
           <div className="flex justify-between">
-            <span>Proof Generation</span>
-            <span className="text-[var(--prism-secondary)]">PVM Rust Engine</span>
+            <span>proof</span>
+            <span className="text-[var(--prism-accent)]">pvm/rust</span>
           </div>
           <div className="flex justify-between">
-            <span>Verification</span>
-            <span className="text-white">Nullifier + Merkle</span>
+            <span>verification</span>
+            <span className="text-[var(--prism-text)]">nullifier + merkle</span>
           </div>
         </div>
 
@@ -78,20 +70,17 @@ export default function WithdrawPanel({ wallet }: WithdrawPanelProps) {
           onClick={handleWithdraw}
           disabled={!wallet?.connected || withdrawing || !noteInput || !recipientAddress}
           className="prism-button w-full text-center"
-          style={{ background: !withdrawing ? "linear-gradient(135deg, #06b6d4, #0891b2)" : undefined }}
         >
           {withdrawing
-            ? "Generating ZK proof via PVM..."
+            ? "generating zk proof..."
             : !wallet?.connected
               ? "Connect wallet to withdraw"
-              : "Withdraw Privately"}
+              : "withdraw privately"}
         </button>
 
         {success && (
-          <div className="bg-[var(--prism-surface-light)] rounded-xl p-4 border border-[var(--prism-success)]">
-            <div className="text-xs text-[var(--prism-success)] font-semibold">
-              Withdrawal complete! Tokens sent to recipient with zero on-chain link to depositor.
-            </div>
+          <div className="border border-[var(--prism-success)] p-4 text-[11px] text-[var(--prism-success)]" style={{ borderRadius: "2px" }}>
+            withdrawal complete. zero on-chain link to depositor.
           </div>
         )}
       </div>

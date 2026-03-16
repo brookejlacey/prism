@@ -22,66 +22,58 @@ export default function CrossVMPanel({ wallet }: CrossVMPanelProps) {
   }
 
   const parachains = [
-    { id: "2000", name: "Asset Hub", symbol: "AH" },
-    { id: "2004", name: "Moonbeam", symbol: "GLMR" },
-    { id: "2006", name: "Astar", symbol: "ASTR" },
-    { id: "2030", name: "Bifrost", symbol: "BNC" },
+    { id: "2000", name: "Asset Hub" },
+    { id: "2004", name: "Moonbeam" },
+    { id: "2006", name: "Astar" },
+    { id: "2030", name: "Bifrost" },
   ];
 
   return (
     <div id="bridge" className="prism-card">
-      <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-        <span className="w-6 h-6 rounded-lg bg-[var(--prism-accent)] flex items-center justify-center text-xs">
-          ⟷
-        </span>
+      <h2 className="text-xs uppercase tracking-widest text-[var(--prism-text-muted)] mb-5">
+        <span className="text-[var(--prism-accent)] mr-2">&harr;</span>
         Cross-VM & XCM Bridge
       </h2>
 
-      {/* Tab selector */}
-      <div className="flex gap-2 mb-4">
+      <div className="flex gap-1 mb-5">
         <button
           onClick={() => { setActiveTab("crossvm"); setSuccess(false); }}
-          className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all ${
+          className={`flex-1 py-2 text-xs border transition-colors ${
             activeTab === "crossvm"
-              ? "bg-[var(--prism-accent)] text-white"
-              : "bg-[var(--prism-surface-light)] text-[var(--prism-text-muted)]"
+              ? "bg-[var(--prism-text)] text-[var(--prism-bg)] border-[var(--prism-text)]"
+              : "bg-transparent text-[var(--prism-text-muted)] border-[var(--prism-border)]"
           }`}
+          style={{ borderRadius: "2px" }}
         >
-          EVM ↔ PVM
+          EVM &harr; PVM
         </button>
         <button
           onClick={() => { setActiveTab("xcm"); setSuccess(false); }}
-          className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all ${
+          className={`flex-1 py-2 text-xs border transition-colors ${
             activeTab === "xcm"
-              ? "bg-[var(--prism-accent)] text-white"
-              : "bg-[var(--prism-surface-light)] text-[var(--prism-text-muted)]"
+              ? "bg-[var(--prism-text)] text-[var(--prism-bg)] border-[var(--prism-text)]"
+              : "bg-transparent text-[var(--prism-text-muted)] border-[var(--prism-border)]"
           }`}
+          style={{ borderRadius: "2px" }}
         >
           XCM Transfer
         </button>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-5">
         {activeTab === "crossvm" ? (
           <>
-            <div className="bg-[var(--prism-surface-light)] rounded-xl p-4 text-center">
-              <div className="flex items-center justify-center gap-4 mb-3">
-                <div className="px-4 py-2 rounded-lg bg-[var(--prism-primary)] text-white text-sm font-medium">
-                  EVM
-                </div>
-                <div className="text-[var(--prism-accent)] text-lg">→</div>
-                <div className="px-4 py-2 rounded-lg bg-[var(--prism-secondary)] text-white text-sm font-medium">
-                  PVM
-                </div>
+            <div className="border border-[var(--prism-border)] p-4 text-center text-[11px] text-[var(--prism-text-muted)]" style={{ borderRadius: "2px" }}>
+              <div className="flex items-center justify-center gap-4 mb-2">
+                <span className="text-[var(--prism-text)] font-bold">EVM</span>
+                <span className="text-[var(--prism-accent)]">&rarr;</span>
+                <span className="text-[var(--prism-text)] font-bold">PVM</span>
               </div>
-              <p className="text-xs text-[var(--prism-text-muted)]">
-                Transfer shielded commitments between EVM and PVM on Polkadot Hub.
-                Cryptographic operations are accelerated 14x on the PVM side.
-              </p>
+              shielded commitments across virtual machines. 14x gas reduction on pvm side.
             </div>
 
             <div>
-              <label className="text-xs text-[var(--prism-text-muted)] mb-2 block">Amount</label>
+              <div className="text-[10px] uppercase tracking-widest text-[var(--prism-text-muted)] mb-2">Amount</div>
               <input
                 type="text"
                 value={amount}
@@ -94,29 +86,27 @@ export default function CrossVMPanel({ wallet }: CrossVMPanelProps) {
         ) : (
           <>
             <div>
-              <label className="text-xs text-[var(--prism-text-muted)] mb-2 block">
-                Destination Parachain
-              </label>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="text-[10px] uppercase tracking-widest text-[var(--prism-text-muted)] mb-2">Destination</div>
+              <div className="grid grid-cols-2 gap-1">
                 {parachains.map((chain) => (
                   <button
                     key={chain.id}
                     onClick={() => setDestParaId(chain.id)}
-                    className={`py-3 rounded-xl text-sm font-medium transition-all ${
+                    className={`py-2.5 text-xs border transition-colors ${
                       destParaId === chain.id
-                        ? "bg-[var(--prism-accent)] text-white"
-                        : "bg-[var(--prism-surface-light)] text-[var(--prism-text-muted)] border border-[var(--prism-border)]"
+                        ? "bg-[var(--prism-text)] text-[var(--prism-bg)] border-[var(--prism-text)]"
+                        : "bg-transparent text-[var(--prism-text-muted)] border-[var(--prism-border)] hover:border-[var(--prism-text-muted)]"
                     }`}
+                    style={{ borderRadius: "2px" }}
                   >
                     {chain.name}
-                    <span className="text-xs opacity-60 ml-1">({chain.symbol})</span>
                   </button>
                 ))}
               </div>
             </div>
 
             <div>
-              <label className="text-xs text-[var(--prism-text-muted)] mb-2 block">Amount</label>
+              <div className="text-[10px] uppercase tracking-widest text-[var(--prism-text-muted)] mb-2">Amount</div>
               <input
                 type="text"
                 value={amount}
@@ -126,20 +116,14 @@ export default function CrossVMPanel({ wallet }: CrossVMPanelProps) {
               />
             </div>
 
-            <div className="bg-[var(--prism-surface-light)] rounded-xl p-4 text-xs text-[var(--prism-text-muted)] space-y-2">
+            <div className="border-t border-[var(--prism-border)] pt-4 text-[11px] text-[var(--prism-text-muted)] space-y-1.5">
               <div className="flex justify-between">
-                <span>Protocol</span>
-                <span className="text-white">XCM v3</span>
+                <span>protocol</span>
+                <span className="text-[var(--prism-text)]">xcm v3</span>
               </div>
               <div className="flex justify-between">
-                <span>Privacy</span>
-                <span className="text-[var(--prism-success)]">Shielded commitment</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Destination</span>
-                <span className="text-white">
-                  {parachains.find((p) => p.id === destParaId)?.name}
-                </span>
+                <span>privacy</span>
+                <span className="text-[var(--prism-success)]">shielded</span>
               </div>
             </div>
           </>
@@ -149,28 +133,21 @@ export default function CrossVMPanel({ wallet }: CrossVMPanelProps) {
           onClick={handleTransfer}
           disabled={!wallet?.connected || processing || !amount}
           className="prism-button w-full text-center"
-          style={{
-            background: !processing
-              ? "linear-gradient(135deg, #f472b6, #ec4899)"
-              : undefined,
-          }}
         >
           {processing
-            ? "Processing cross-chain commitment..."
+            ? "processing..."
             : !wallet?.connected
               ? "Connect wallet"
               : activeTab === "crossvm"
-                ? "Transfer EVM → PVM"
-                : "Send Private XCM Transfer"}
+                ? "transfer evm > pvm"
+                : "send xcm transfer"}
         </button>
 
         {success && (
-          <div className="bg-[var(--prism-surface-light)] rounded-xl p-4 border border-[var(--prism-success)]">
-            <div className="text-xs text-[var(--prism-success)] font-semibold">
-              {activeTab === "crossvm"
-                ? "Cross-VM transfer complete! Commitment locked on EVM, ready for PVM release."
-                : `XCM transfer initiated to ${parachains.find((p) => p.id === destParaId)?.name}. Awaiting confirmation.`}
-            </div>
+          <div className="border border-[var(--prism-success)] p-4 text-[11px] text-[var(--prism-success)]" style={{ borderRadius: "2px" }}>
+            {activeTab === "crossvm"
+              ? "cross-vm complete. commitment locked."
+              : `xcm initiated to ${parachains.find((p) => p.id === destParaId)?.name}.`}
           </div>
         )}
       </div>

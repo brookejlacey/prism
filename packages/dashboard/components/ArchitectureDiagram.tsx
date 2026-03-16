@@ -3,85 +3,73 @@
 export default function ArchitectureDiagram() {
   return (
     <div className="prism-card">
-      <h2 className="text-lg font-semibold mb-4">Architecture</h2>
+      <h2 className="text-xs uppercase tracking-widest text-[var(--prism-text-muted)] mb-5">Architecture</h2>
 
-      <div className="space-y-4">
-        {/* EVM Layer */}
-        <div className="relative">
-          <div className="text-xs text-[var(--prism-text-muted)] mb-2 uppercase tracking-wider">
-            Track 1 — EVM Smart Contracts
-          </div>
-          <div className="grid grid-cols-3 gap-2">
-            <div className="bg-[var(--prism-primary)] bg-opacity-20 border border-[var(--prism-primary)] rounded-xl p-3 text-center">
-              <div className="text-xs font-semibold text-[var(--prism-primary-light)]">PrismVault</div>
-              <div className="text-[10px] text-[var(--prism-text-muted)] mt-1">Deposit/Withdraw</div>
-            </div>
-            <div className="bg-[var(--prism-primary)] bg-opacity-20 border border-[var(--prism-primary)] rounded-xl p-3 text-center">
-              <div className="text-xs font-semibold text-[var(--prism-primary-light)]">PrismRouter</div>
-              <div className="text-[10px] text-[var(--prism-text-muted)] mt-1">Multi-vault routing</div>
-            </div>
-            <div className="bg-[var(--prism-primary)] bg-opacity-20 border border-[var(--prism-primary)] rounded-xl p-3 text-center">
-              <div className="text-xs font-semibold text-[var(--prism-primary-light)]">CrossVMBridge</div>
-              <div className="text-[10px] text-[var(--prism-text-muted)] mt-1">EVM ↔ PVM</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Cross-VM arrow */}
-        <div className="flex items-center justify-center">
-          <div className="h-8 w-px bg-gradient-to-b from-[var(--prism-primary)] to-[var(--prism-secondary)]" />
-          <span className="absolute text-xs text-[var(--prism-text-muted)] bg-[var(--prism-surface)] px-2">
-            Cross-VM Precompile Calls
-          </span>
-        </div>
-
-        {/* PVM Layer */}
+      <div className="space-y-5 text-[11px]">
+        {/* EVM */}
         <div>
-          <div className="text-xs text-[var(--prism-text-muted)] mb-2 uppercase tracking-wider">
-            Track 2 — PVM Rust Precompiles
+          <div className="text-[10px] uppercase tracking-widest text-[var(--prism-text-muted)] mb-2">
+            track 1 &mdash; evm
           </div>
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-3 gap-1">
             {[
-              { name: "Poseidon", desc: "ZK Hash" },
-              { name: "Pedersen", desc: "Commitments" },
-              { name: "RangeProof", desc: "Value bounds" },
-              { name: "Nullifier", desc: "Anti-double-spend" },
-            ].map((mod) => (
-              <div
-                key={mod.name}
-                className="bg-[var(--prism-secondary)] bg-opacity-20 border border-[var(--prism-secondary)] rounded-xl p-3 text-center"
-              >
-                <div className="text-xs font-semibold text-[var(--prism-secondary)]">{mod.name}</div>
-                <div className="text-[10px] text-[var(--prism-text-muted)] mt-1">{mod.desc}</div>
+              { name: "PrismVault", desc: "deposit/withdraw" },
+              { name: "PrismRouter", desc: "multi-vault" },
+              { name: "CrossVMBridge", desc: "evm/pvm/xcm" },
+            ].map((c) => (
+              <div key={c.name} className="border border-[var(--prism-border)] p-3" style={{ borderRadius: "2px" }}>
+                <div className="font-bold text-[var(--prism-text)]">{c.name}</div>
+                <div className="text-[var(--prism-text-muted)] text-[10px]">{c.desc}</div>
               </div>
             ))}
           </div>
-          <div className="mt-2 text-center">
-            <span className="text-[10px] px-3 py-1 rounded-full bg-[var(--prism-success)] bg-opacity-20 text-[var(--prism-success)] font-medium">
-              14x cheaper than EVM
-            </span>
+        </div>
+
+        {/* Connector */}
+        <div className="text-center text-[var(--prism-text-muted)] text-[10px] py-1">
+          &darr; cross-vm precompile calls &darr;
+        </div>
+
+        {/* PVM */}
+        <div>
+          <div className="text-[10px] uppercase tracking-widest text-[var(--prism-text-muted)] mb-2">
+            track 2 &mdash; pvm rust
+          </div>
+          <div className="grid grid-cols-4 gap-1">
+            {[
+              { name: "Poseidon", desc: "hash" },
+              { name: "Pedersen", desc: "commit" },
+              { name: "RangeProof", desc: "bounds" },
+              { name: "Nullifier", desc: "anti-dupe" },
+            ].map((m) => (
+              <div key={m.name} className="border border-[var(--prism-border)] p-3" style={{ borderRadius: "2px" }}>
+                <div className="font-bold text-[var(--prism-accent)]">{m.name}</div>
+                <div className="text-[var(--prism-text-muted)] text-[10px]">{m.desc}</div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-2 text-center text-[10px] text-[var(--prism-accent)]">
+            14x cheaper than EVM
           </div>
         </div>
 
-        {/* XCM Layer */}
-        <div className="flex items-center justify-center">
-          <div className="h-8 w-px bg-gradient-to-b from-[var(--prism-secondary)] to-[var(--prism-accent)]" />
-          <span className="absolute text-xs text-[var(--prism-text-muted)] bg-[var(--prism-surface)] px-2">
-            XCM Messages
-          </span>
+        {/* XCM */}
+        <div className="text-center text-[var(--prism-text-muted)] text-[10px] py-1">
+          &darr; xcm messages &darr;
         </div>
 
         <div>
-          <div className="text-xs text-[var(--prism-text-muted)] mb-2 uppercase tracking-wider">
-            Cross-Chain — XCM Private Transfers
+          <div className="text-[10px] uppercase tracking-widest text-[var(--prism-text-muted)] mb-2">
+            cross-chain
           </div>
-          <div className="flex gap-2 overflow-x-auto">
+          <div className="flex gap-1">
             {["Asset Hub", "Moonbeam", "Astar", "Bifrost", "Acala"].map((chain) => (
               <div
                 key={chain}
-                className="flex-shrink-0 bg-[var(--prism-accent)] bg-opacity-20 border border-[var(--prism-accent)] rounded-xl px-4 py-2 text-center"
+                className="flex-1 border border-[var(--prism-border)] py-2 text-center text-[10px] text-[var(--prism-text-muted)]"
+                style={{ borderRadius: "2px" }}
               >
-                <div className="text-xs font-medium text-[var(--prism-accent)]">{chain}</div>
+                {chain}
               </div>
             ))}
           </div>

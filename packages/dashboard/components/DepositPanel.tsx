@@ -9,9 +9,9 @@ interface DepositPanelProps {
 
 const DENOMINATIONS = ["0.1", "1", "10", "100"];
 const TOKENS = [
-  { symbol: "USDC", name: "USD Coin", icon: "$" },
-  { symbol: "DOT", name: "Polkadot", icon: "●" },
-  { symbol: "WND", name: "Westend", icon: "W" },
+  { symbol: "USDC", icon: "$" },
+  { symbol: "DOT", icon: "." },
+  { symbol: "WND", icon: "w" },
 ];
 
 export default function DepositPanel({ wallet }: DepositPanelProps) {
@@ -23,111 +23,101 @@ export default function DepositPanel({ wallet }: DepositPanelProps) {
   async function handleDeposit() {
     if (!wallet?.connected) return;
     setDepositing(true);
-
-    // Simulate deposit for demo
     await new Promise((r) => setTimeout(r, 2000));
     setNoteString(
-      `prism-note-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+      `prism-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
     );
     setDepositing(false);
   }
 
   return (
     <div id="deposit" className="prism-card">
-      <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-        <span className="w-6 h-6 rounded-lg bg-[var(--prism-primary)] flex items-center justify-center text-xs">
-          ↓
-        </span>
+      <h2 className="text-xs uppercase tracking-widest text-[var(--prism-text-muted)] mb-5">
+        <span className="text-[var(--prism-accent)] mr-2">&darr;</span>
         Private Deposit
       </h2>
 
-      <div className="space-y-4">
-        {/* Token selection */}
+      <div className="space-y-5">
         <div>
-          <label className="text-xs text-[var(--prism-text-muted)] mb-2 block">Token</label>
-          <div className="flex gap-2">
+          <div className="text-[10px] uppercase tracking-widest text-[var(--prism-text-muted)] mb-2">Token</div>
+          <div className="flex gap-1">
             {TOKENS.map((token, i) => (
               <button
                 key={token.symbol}
                 onClick={() => setSelectedToken(i)}
-                className={`flex-1 py-3 rounded-xl text-sm font-medium transition-all ${
+                className={`flex-1 py-2.5 text-xs transition-colors border ${
                   selectedToken === i
-                    ? "bg-[var(--prism-primary)] text-white"
-                    : "bg-[var(--prism-surface-light)] text-[var(--prism-text-muted)] border border-[var(--prism-border)] hover:border-[var(--prism-primary)]"
+                    ? "bg-[var(--prism-text)] text-[var(--prism-bg)] border-[var(--prism-text)]"
+                    : "bg-transparent text-[var(--prism-text-muted)] border-[var(--prism-border)] hover:border-[var(--prism-text-muted)]"
                 }`}
+                style={{ borderRadius: "2px" }}
               >
-                <span className="mr-1">{token.icon}</span>
                 {token.symbol}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Denomination selection */}
         <div>
-          <label className="text-xs text-[var(--prism-text-muted)] mb-2 block">
-            Denomination
-          </label>
-          <div className="flex gap-2">
+          <div className="text-[10px] uppercase tracking-widest text-[var(--prism-text-muted)] mb-2">Amount</div>
+          <div className="flex gap-1">
             {DENOMINATIONS.map((denom, i) => (
               <button
                 key={denom}
                 onClick={() => setSelectedDenom(i)}
-                className={`flex-1 py-3 rounded-xl text-sm font-medium transition-all ${
+                className={`flex-1 py-2.5 text-xs transition-colors border ${
                   selectedDenom === i
-                    ? "bg-[var(--prism-primary)] text-white"
-                    : "bg-[var(--prism-surface-light)] text-[var(--prism-text-muted)] border border-[var(--prism-border)] hover:border-[var(--prism-primary)]"
+                    ? "bg-[var(--prism-text)] text-[var(--prism-bg)] border-[var(--prism-text)]"
+                    : "bg-transparent text-[var(--prism-text-muted)] border-[var(--prism-border)] hover:border-[var(--prism-text-muted)]"
                 }`}
+                style={{ borderRadius: "2px" }}
               >
-                {denom} {TOKENS[selectedToken].symbol}
+                {denom}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Info */}
-        <div className="bg-[var(--prism-surface-light)] rounded-xl p-4 text-xs text-[var(--prism-text-muted)] space-y-2">
+        <div className="border-t border-[var(--prism-border)] pt-4 text-[11px] text-[var(--prism-text-muted)] space-y-1.5">
           <div className="flex justify-between">
-            <span>Privacy Pool Size</span>
-            <span className="text-white">53 deposits</span>
+            <span>pool size</span>
+            <span className="text-[var(--prism-text)]">53 deposits</span>
           </div>
           <div className="flex justify-between">
-            <span>Crypto Engine</span>
-            <span className="text-[var(--prism-secondary)]">PVM Rust Precompile</span>
+            <span>engine</span>
+            <span className="text-[var(--prism-accent)]">pvm/rust</span>
           </div>
           <div className="flex justify-between">
-            <span>Commitment Scheme</span>
-            <span className="text-white">Poseidon + Pedersen</span>
+            <span>scheme</span>
+            <span className="text-[var(--prism-text)]">poseidon + pedersen</span>
           </div>
         </div>
 
-        {/* Deposit button */}
         <button
           onClick={handleDeposit}
           disabled={!wallet?.connected || depositing}
           className="prism-button w-full text-center"
         >
           {depositing
-            ? "Generating commitment..."
+            ? "generating commitment..."
             : !wallet?.connected
               ? "Connect wallet to deposit"
-              : `Deposit ${DENOMINATIONS[selectedDenom]} ${TOKENS[selectedToken].symbol} Privately`}
+              : `deposit ${DENOMINATIONS[selectedDenom]} ${TOKENS[selectedToken].symbol}`}
         </button>
 
-        {/* Note output */}
         {noteString && (
-          <div className="bg-[var(--prism-surface-light)] rounded-xl p-4 border border-[var(--prism-success)]">
-            <div className="text-xs text-[var(--prism-success)] font-semibold mb-2">
-              Deposit successful! Save this note:
+          <div className="border border-[var(--prism-success)] p-4" style={{ borderRadius: "2px" }}>
+            <div className="text-[10px] uppercase tracking-widest text-[var(--prism-success)] mb-2">
+              deposit confirmed &mdash; save this note
             </div>
-            <div className="font-mono text-xs break-all bg-[var(--prism-bg)] p-3 rounded-lg">
+            <div className="text-[11px] break-all bg-[var(--prism-bg)] p-3 border border-[var(--prism-border)]" style={{ borderRadius: "2px" }}>
               {noteString}
             </div>
             <button
               onClick={() => navigator.clipboard.writeText(noteString)}
-              className="prism-button-secondary text-xs mt-2 py-2 px-3"
+              className="prism-button-secondary text-[10px] mt-3 py-1.5 px-3"
             >
-              Copy Note
+              copy
             </button>
           </div>
         )}
