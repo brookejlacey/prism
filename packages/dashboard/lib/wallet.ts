@@ -15,11 +15,11 @@ export interface WalletState {
 }
 
 const POLKADOT_HUB_TESTNET = {
-  chainId: "0x19104E45",
-  chainName: "Polkadot Hub Westend Testnet",
-  nativeCurrency: { name: "WND", symbol: "WND", decimals: 18 },
-  rpcUrls: ["https://westend-asset-hub-eth-rpc.polkadot.io"],
-  blockExplorerUrls: ["https://assethub-westend.subscan.io"],
+  chainId: "0x190F1B41",
+  chainName: "Polkadot Hub Testnet",
+  nativeCurrency: { name: "PAS", symbol: "PAS", decimals: 18 },
+  rpcUrls: ["https://services.polkadothub-rpc.com/testnet"],
+  blockExplorerUrls: ["https://blockscout-polkadothub-testnet.parity-testnet.parity.io"],
 };
 
 export async function connectWallet(): Promise<WalletState> {
