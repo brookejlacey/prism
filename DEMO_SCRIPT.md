@@ -82,7 +82,7 @@ Arrange these tabs left-to-right before recording:
 
 **[ACTION: Scroll back up to the Protocol Metrics stats grid. Hover over each card briefly.]**
 
-> "Here are the live protocol metrics — anonymity set size, total deposits, cross-VM transfers, PVM gas savings, and XCM transfer count. These track the state of the deployed contracts on Westend testnet."
+> "Here are the protocol metrics the dashboard tracks — anonymity set size, total deposits, cross-VM transfers, PVM gas savings, and XCM transfer count. These are the key health indicators for the deployed contracts on Paseo testnet."
 
 **[ACTION: Scroll to the Deposit Panel. Select DOT token, select the 1 denomination.]**
 
@@ -134,7 +134,7 @@ Arrange these tabs left-to-right before recording:
 
 **[ACTION: Switch to VS Code terminal. Run `pnpm test` from the project root. Let the output scroll.]**
 
-> "Tests. We have 28 contract-level tests covering PrismVault, PrismRouter, and CrossVMBridge — deposits, withdrawals, double-spend prevention, edge cases. Plus 16 end-to-end tests on the dashboard using Playwright."
+> "Tests. We have 28 contract-level tests covering PrismVault, PrismRouter, and CrossVMBridge — deposits, withdrawals, double-spend prevention, edge cases. Nineteen SDK unit tests for the cryptographic primitives. Twenty-six Rust tests for the PVM precompiles. Plus 16 end-to-end tests on the dashboard using Playwright. Eighty-nine tests total, all green."
 
 **[ACTION: Let the terminal show all tests passing — green checkmarks.]**
 
@@ -186,7 +186,10 @@ Arrange these tabs left-to-right before recording:
 | Solidity contracts | 3 (PrismVault, PrismRouter, CrossVMBridge) |
 | Rust precompile modules | 5 (Poseidon, Pedersen, Merkle, Nullifier, Range Proof) |
 | Contract tests | 28 |
+| SDK unit tests | 19 |
+| Rust PVM tests | 26 |
 | E2E tests | 16 |
+| Total tests | 89 |
 | Supported parachains | 4 (Asset Hub, Moonbeam, Astar, Bifrost) |
 | Token denominations | 0.1, 1, 10, 100 |
 | Tracks covered | Track 1 (EVM) + Track 2 (PVM) + XCM |

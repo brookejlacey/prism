@@ -17,6 +17,11 @@ export default function Home() {
       <Header wallet={wallet} onConnect={setWallet} />
 
       <main className="max-w-6xl mx-auto px-6 py-10 space-y-10">
+        {/* Demo mode banner */}
+        <div className="text-center text-[10px] uppercase tracking-[0.2em] text-[var(--prism-text-muted)] py-2 px-4 border border-[var(--prism-border)]" style={{ borderRadius: "2px" }}>
+          Demo Mode &mdash; Simulating protocol interactions on Paseo testnet
+        </div>
+
         {/* Hero */}
         <section className="py-16 border-b border-[var(--prism-border)]">
           <p className="text-[10px] uppercase tracking-[0.3em] text-[var(--prism-text-muted)] mb-4">
