@@ -1,105 +1,103 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers";
+import { createNote, TREE_LEVELS } from "@prism/sdk";
 
-describe("PrismRouter", function () {
-  async function deployFixture() {
-    const [owner, alice, bob] = await ethers.getSigners();
+async function fixture() {
+  const [deployer, alice] = await ethers.getSigners();
 
-    const PVMCore = await ethers.getContractFactory("PVMCryptoCoreFallback");
-    const pvmCore = await PVMCore.deploy();
-    const pvmCoreAddr = await pvmCore.getAddress();
+  const Poseidon = await ethers.getContractFactory("PoseidonT3");
+  const poseidonLib = await Poseidon.deploy();
+  await poseidonLib.waitForDeployment();
+  const poseidonAddr = await poseidonLib.getAddress();
 
-    const MockToken = await ethers.getContractFactory("MockERC20");
-    const usdc = await MockToken.deploy("USD Coin", "USDC", 18);
-    const usdcAddr = await usdc.getAddress();
+  const Verifier = await ethers.getContractFactory("Groth16Verifier");
+  const verifier = await Verifier.deploy();
+  await verifier.waitForDeployment();
+  const verifierAddr = await verifier.getAddress();
 
-    const denomination = ethers.parseEther("1");
-    const PrismVault = await ethers.getContractFactory("PrismVault");
-    const vault = await PrismVault.deploy(usdcAddr, denomination, pvmCoreAddr);
-    const vaultAddr = await vault.getAddress();
+  const Mock = await ethers.getContractFactory("MockERC20");
+  const token = await Mock.deploy("USD Coin", "USDC", 18);
+  await token.waitForDeployment();
+  const tokenAddr = await token.getAddress();
 
-    const PrismRouter = await ethers.getContractFactory("PrismRouter");
-    const router = await PrismRouter.deploy(pvmCoreAddr);
-    const routerAddr = await router.getAddress();
+  const Router = await ethers.getContractFactory("PrismRouter");
+  const router = await Router.deploy();
+  await router.waitForDeployment();
 
-    await router.registerVault(usdcAddr, denomination, vaultAddr);
+  const Vault = await ethers.getContractFactory("PrismVault", {
+    libraries: { PoseidonT3: poseidonAddr },
+  });
 
-    await usdc.mint(alice.address, ethers.parseEther("1000"));
-    await usdc.connect(alice).approve(routerAddr, ethers.MaxUint256);
-
-    // Also approve the vault for the router
-    // The router transfers to itself then to vault, so vault needs router approval
-    // Actually the router does transferFrom user -> router, then approve vault, then vault.deposit
-    // So we just need user -> router approval (done above)
-
-    return { owner, alice, bob, pvmCore, usdc, vault, router, denomination, pvmCoreAddr, vaultAddr, routerAddr, usdcAddr };
+  async function deployVault(denom: bigint) {
+    const v = await Vault.deploy(verifierAddr, tokenAddr, denom, TREE_LEVELS);
+    await v.waitForDeployment();
+    return v;
   }
 
-  describe("Vault Registration", function () {
-    it("should register a vault", async function () {
-      const { router, usdcAddr, vaultAddr, denomination } = await loadFixture(deployFixture);
-      expect(await router.getVault(usdcAddr, denomination)).to.equal(vaultAddr);
-    });
+  return { deployer, alice, token, tokenAddr, router, deployVault };
+}
 
-    it("should track supported tokens", async function () {
-      const { router, usdcAddr } = await loadFixture(deployFixture);
-      const tokens = await router.getSupportedTokens();
-      expect(tokens).to.include(usdcAddr);
-    });
+describe("PrismRouter", function () {
+  this.timeout(60_000);
 
-    it("should reject duplicate vault registration", async function () {
-      const { router, usdcAddr, vaultAddr, denomination } = await loadFixture(deployFixture);
-      await expect(router.registerVault(usdcAddr, denomination, vaultAddr)).to.be.revertedWith(
-        "Vault already exists"
-      );
-    });
+  it("registers a vault and tracks tokens + denominations", async function () {
+    const { router, tokenAddr, deployVault } = await fixture();
+    const denom = ethers.parseEther("1");
+    const vault = await deployVault(denom);
 
-    it("should only allow owner to register vaults", async function () {
-      const { alice, router, usdcAddr, vaultAddr } = await loadFixture(deployFixture);
-      await expect(
-        router.connect(alice).registerVault(usdcAddr, ethers.parseEther("10"), vaultAddr)
-      ).to.be.reverted;
-    });
+    await expect(router.registerVault(tokenAddr, denom, await vault.getAddress())).to.emit(
+      router,
+      "VaultRegistered"
+    );
+    expect(await router.getVault(tokenAddr, denom)).to.equal(await vault.getAddress());
+    expect(await router.getSupportedTokens()).to.deep.equal([tokenAddr]);
+    expect(await router.getDenominations(tokenAddr)).to.deep.equal([denom]);
   });
 
-  describe("Router Deposits", function () {
-    it("should deposit through router", async function () {
-      const { alice, router, pvmCore, usdc, denomination, vaultAddr, usdcAddr } = await loadFixture(deployFixture);
+  it("rejects a duplicate registration and non-owner registration", async function () {
+    const { router, tokenAddr, deployVault, alice } = await fixture();
+    const denom = ethers.parseEther("1");
+    const vault = await deployVault(denom);
+    await (await router.registerVault(tokenAddr, denom, await vault.getAddress())).wait();
 
-      const secret = 12345n;
-      const nullifierHash = await pvmCore.poseidonHash(secret, 0n);
-      const commitment = await pvmCore.poseidonHash(secret, nullifierHash);
-
-      const balBefore = await usdc.balanceOf(alice.address);
-      await router.connect(alice).deposit(usdcAddr, denomination, commitment);
-
-      expect(await usdc.balanceOf(alice.address)).to.equal(balBefore - denomination);
-      expect(await router.totalPrivateTransfers()).to.equal(1);
-    });
+    await expect(
+      router.registerVault(tokenAddr, denom, await vault.getAddress())
+    ).to.be.revertedWith("Vault already exists");
+    await expect(
+      router.connect(alice).registerVault(tokenAddr, denom, await vault.getAddress())
+    ).to.be.revertedWithCustomError(router, "OwnableUnauthorizedAccount");
   });
 
-  describe("Protocol Stats", function () {
-    it("should return correct stats", async function () {
-      const { router } = await loadFixture(deployFixture);
-      const [totalVaults, totalTokens, transfers] = await router.getProtocolStats();
-      expect(totalVaults).to.equal(1);
-      expect(totalTokens).to.equal(1);
-      expect(transfers).to.equal(0);
-    });
+  it("routes a deposit into the matching vault", async function () {
+    const { router, token, tokenAddr, deployVault, alice } = await fixture();
+    const denom = ethers.parseEther("1");
+    const vault = await deployVault(denom);
+    await (await router.registerVault(tokenAddr, denom, await vault.getAddress())).wait();
+
+    await (await token.mint(alice.address, denom)).wait();
+    await (await token.connect(alice).approve(await router.getAddress(), denom)).wait();
+
+    const note = await createNote();
+    await expect(router.connect(alice).deposit(tokenAddr, denom, note.commitment)).to.emit(
+      router,
+      "PrivateDeposit"
+    );
+    const [deposits] = await vault.getStats();
+    expect(deposits).to.equal(1n);
+    expect(await token.balanceOf(await vault.getAddress())).to.equal(denom);
   });
 
-  describe("Deploy Standard Vaults", function () {
-    it("should deploy all standard denomination vaults for a token", async function () {
-      const { owner, router, usdcAddr } = await loadFixture(deployFixture);
-
-      const MockToken = await ethers.getContractFactory("MockERC20");
-      const dai = await MockToken.deploy("DAI", "DAI", 18);
-      const daiAddr = await dai.getAddress();
-
-      await router.deployStandardVaults(daiAddr);
-      const denoms = await router.getDenominations(daiAddr);
-      expect(denoms.length).to.equal(4);
-    });
+  it("computes an optimal denomination split", async function () {
+    const { router, tokenAddr, deployVault } = await fixture();
+    const denoms = [ethers.parseEther("1"), ethers.parseEther("10")];
+    for (const d of denoms) {
+      const v = await deployVault(d);
+      await (await router.registerVault(tokenAddr, d, await v.getAddress())).wait();
+    }
+    const [outDenoms, counts] = await router.getOptimalSplit(tokenAddr, ethers.parseEther("23"));
+    // 23 = 2 x 10 + 3 x 1
+    const map = new Map(outDenoms.map((d: bigint, i: number) => [d.toString(), counts[i]]));
+    expect(map.get(ethers.parseEther("10").toString())).to.equal(2n);
+    expect(map.get(ethers.parseEther("1").toString())).to.equal(3n);
   });
 });

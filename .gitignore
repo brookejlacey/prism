@@ -1,6 +1,7 @@
 node_modules/
 dist/
 .next/
+out/
 artifacts/
 cache/
 typechain-types/
@@ -8,8 +9,20 @@ coverage/
 .env
 .env.local
 *.log
-*.md
 target/
 test-results/
 playwright-report/
 .vercel
+.claude/
+
+# Circuit build: keep the committed prover artifacts (wasm/zkey/vkey) so the
+# demo runs out of the box; drop the heavy/regenerable ceremony intermediates.
+packages/circuits/build/*.ptau
+packages/circuits/build/withdraw_0.zkey
+packages/circuits/build/withdraw.r1cs
+packages/circuits/build/withdraw.sym
+
+# Internal notes are ignored; the public docs are explicitly allowed.
+*.md
+!README.md
+!AGENTS.md

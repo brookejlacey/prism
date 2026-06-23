@@ -24,9 +24,11 @@ export default function DepositPanel({ wallet }: DepositPanelProps) {
     if (!wallet?.connected) return;
     setDepositing(true);
     await new Promise((r) => setTimeout(r, 2000));
-    setNoteString(
-      `prism-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
-    );
+    const rand = () =>
+      Array.from(crypto.getRandomValues(new Uint8Array(31)))
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("");
+    setNoteString(`prism-v1-${rand()}-${rand()}`);
     setDepositing(false);
   }
 
@@ -80,16 +82,16 @@ export default function DepositPanel({ wallet }: DepositPanelProps) {
 
         <div className="border-t border-[var(--prism-border)] pt-4 text-[11px] text-[var(--prism-text-muted)] space-y-1.5">
           <div className="flex justify-between">
-            <span>pool size</span>
-            <span className="text-[var(--prism-text)]">53 deposits</span>
+            <span>anonymity set</span>
+            <span className="text-[var(--prism-text)]">142 deposits</span>
           </div>
           <div className="flex justify-between">
-            <span>engine</span>
-            <span className="text-[var(--prism-accent)]">pvm/rust</span>
+            <span>commitment</span>
+            <span className="text-[var(--prism-accent)]">poseidon(nullifier, secret)</span>
           </div>
           <div className="flex justify-between">
-            <span>scheme</span>
-            <span className="text-[var(--prism-text)]">poseidon + pedersen</span>
+            <span>tree</span>
+            <span className="text-[var(--prism-text)]">depth-20 merkle</span>
           </div>
         </div>
 
@@ -108,7 +110,7 @@ export default function DepositPanel({ wallet }: DepositPanelProps) {
         {noteString && (
           <div className="border border-[var(--prism-success)] p-4" style={{ borderRadius: "2px" }}>
             <div className="text-[10px] uppercase tracking-widest text-[var(--prism-success)] mb-2">
-              deposit confirmed &mdash; save this note
+              deposit confirmed · save this note
             </div>
             <div className="text-[11px] break-all bg-[var(--prism-bg)] p-3 border border-[var(--prism-border)]" style={{ borderRadius: "2px" }}>
               {noteString}

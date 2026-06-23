@@ -4,12 +4,12 @@ import { DEMO_STATS } from "@/lib/contracts";
 
 export default function StatsGrid() {
   const stats = [
-    { label: "Anonymity Set", value: DEMO_STATS.anonymitySet.toString() },
+    { label: "Anonymity Set", value: DEMO_STATS.anonymitySet.toString(), accent: true },
     { label: "Deposits", value: DEMO_STATS.totalDeposits.toString() },
-    { label: "Cross-VM Ops", value: DEMO_STATS.crossVMTransfers.toString() },
-    { label: "PVM Savings", value: DEMO_STATS.evmGasSaved, accent: true },
-    { label: "XCM Transfers", value: DEMO_STATS.xcmTransfers.toString() },
-    { label: "Tokens", value: DEMO_STATS.supportedTokens.join(" / ") },
+    { label: "Withdrawals", value: DEMO_STATS.totalWithdrawals.toString() },
+    { label: "Pool Balance", value: `${DEMO_STATS.poolBalance} USDC` },
+    { label: "Tree Depth", value: DEMO_STATS.treeDepth.toString() },
+    { label: "Denominations", value: DEMO_STATS.denominations.join(" / ") },
   ];
 
   return (

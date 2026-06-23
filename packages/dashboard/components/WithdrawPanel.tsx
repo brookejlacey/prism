@@ -54,15 +54,15 @@ export default function WithdrawPanel({ wallet }: WithdrawPanelProps) {
         <div className="border-t border-[var(--prism-border)] pt-4 text-[11px] text-[var(--prism-text-muted)] space-y-1.5">
           <div className="flex justify-between">
             <span>privacy</span>
-            <span className="text-[var(--prism-success)]">full unlinkability</span>
+            <span className="text-[var(--prism-success)]">no deposit link</span>
           </div>
           <div className="flex justify-between">
             <span>proof</span>
-            <span className="text-[var(--prism-accent)]">pvm/rust</span>
+            <span className="text-[var(--prism-accent)]">groth16 zk-snark</span>
           </div>
           <div className="flex justify-between">
-            <span>verification</span>
-            <span className="text-[var(--prism-text)]">nullifier + merkle</span>
+            <span>reveals</span>
+            <span className="text-[var(--prism-text)]">nullifier hash only</span>
           </div>
         </div>
 

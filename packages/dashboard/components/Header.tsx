@@ -36,8 +36,6 @@ export default function Header({ wallet, onConnect }: HeaderProps) {
       <nav className="flex items-center gap-6 text-xs text-[var(--prism-text-muted)] uppercase tracking-wider">
         <a href="#deposit" className="hover:text-[var(--prism-text)] transition-colors">Deposit</a>
         <a href="#withdraw" className="hover:text-[var(--prism-text)] transition-colors">Withdraw</a>
-        <a href="#swap" className="hover:text-[var(--prism-text)] transition-colors">Swap</a>
-        <a href="#bridge" className="hover:text-[var(--prism-text)] transition-colors">Bridge</a>
       </nav>
 
       {wallet?.connected ? (

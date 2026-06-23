@@ -1,118 +1,78 @@
 import { describe, it, expect } from "vitest";
 import {
-  generateSecret,
-  poseidonHash,
-  deriveNullifier,
-  generateCommitment,
+  poseidon,
+  createNote,
+  fromSecrets,
   parseNote,
-  generateProof,
-  computeCommitment,
+  MerkleTree,
+  FIELD_PRIME,
+  ZERO_VALUE,
 } from "../crypto";
-import { ethers } from "ethers";
 
-const FIELD_PRIME =
-  21888242871839275222246405745257275088548364400416034343698204186575808495617n;
-
-describe("generateSecret", () => {
-  it("returns a value within the BN254 field", () => {
-    const secret = generateSecret();
-    expect(secret).toBeGreaterThan(0n);
-    expect(secret).toBeLessThan(FIELD_PRIME);
-  });
-
-  it("returns different values on successive calls", () => {
-    const a = generateSecret();
-    const b = generateSecret();
-    expect(a).not.toBe(b);
-  });
-});
-
-describe("poseidonHash", () => {
-  it("is deterministic", () => {
-    const a = poseidonHash(42n, 99n);
-    const b = poseidonHash(42n, 99n);
+describe("poseidon", () => {
+  it("is deterministic and field-bounded", async () => {
+    const a = await poseidon([42n, 99n]);
+    const b = await poseidon([42n, 99n]);
     expect(a).toBe(b);
+    expect(a).toBeGreaterThan(0n);
+    expect(a).toBeLessThan(FIELD_PRIME);
   });
 
-  it("produces different outputs for different inputs", () => {
-    const a = poseidonHash(1n, 2n);
-    const b = poseidonHash(2n, 1n);
-    expect(a).not.toBe(b);
-  });
-
-  it("returns a value within the field", () => {
-    const h = poseidonHash(123n, 456n);
-    expect(h).toBeGreaterThanOrEqual(0n);
-    expect(h).toBeLessThan(FIELD_PRIME);
+  it("is order-sensitive", async () => {
+    expect(await poseidon([1n, 2n])).not.toBe(await poseidon([2n, 1n]));
   });
 });
 
-describe("deriveNullifier", () => {
-  it("is deterministic", () => {
-    const secret = 12345n;
-    expect(deriveNullifier(secret)).toBe(deriveNullifier(secret));
+describe("notes", () => {
+  it("derives commitment and nullifierHash from secrets", async () => {
+    const note = await fromSecrets(123n, 456n);
+    expect(note.commitment).toBe(await poseidon([123n, 456n]));
+    expect(note.nullifierHash).toBe(await poseidon([123n]));
   });
 
-  it("equals poseidonHash(secret, 0)", () => {
-    const secret = 99999n;
-    expect(deriveNullifier(secret)).toBe(poseidonHash(secret, 0n));
-  });
-});
-
-describe("generateCommitment / parseNote round-trip", () => {
-  it("round-trips through noteString encoding", () => {
-    const token = "0x" + "ab".repeat(20);
-    const denomination = ethers.parseEther("1");
-
-    const note = generateCommitment(token, denomination);
-    const restored = parseNote(note.noteString);
-
+  it("round-trips through the note string", async () => {
+    const note = await createNote();
+    const restored = await parseNote(note.noteString);
+    expect(restored.nullifier).toBe(note.nullifier);
     expect(restored.secret).toBe(note.secret);
-    expect(restored.nullifierHash).toBe(note.nullifierHash);
     expect(restored.commitment).toBe(note.commitment);
-    expect(restored.denomination).toBe(note.denomination);
-    expect(restored.token.toLowerCase()).toBe(token.toLowerCase());
+    expect(restored.nullifierHash).toBe(note.nullifierHash);
   });
 
-  it("produces a consistent commitment from a fixed secret", () => {
-    const token = "0x" + "00".repeat(20);
-    const denomination = ethers.parseEther("10");
-    const secret = 777n;
-
-    const a = generateCommitment(token, denomination, secret);
-    const b = generateCommitment(token, denomination, secret);
-
-    expect(a.commitment).toBe(b.commitment);
-    expect(a.nullifierHash).toBe(b.nullifierHash);
-    expect(a.noteString).toBe(b.noteString);
+  it("creates distinct random notes", async () => {
+    const a = await createNote();
+    const b = await createNote();
+    expect(a.commitment).not.toBe(b.commitment);
   });
 });
 
-describe("computeCommitment", () => {
-  it("matches generateCommitment output for the same secret", () => {
-    const token = "0x" + "ff".repeat(20);
-    const denomination = ethers.parseEther("0.1");
-    const secret = 42n;
-
-    const note = generateCommitment(token, denomination, secret);
-    const computed = computeCommitment(secret);
-
-    expect(computed.commitment).toBe(note.commitment);
-    expect(computed.nullifierHash).toBe(note.nullifierHash);
+describe("MerkleTree", () => {
+  it("an empty tree's root is the zero-subtree root", async () => {
+    const empty = await MerkleTree.build([]);
+    let z = ZERO_VALUE;
+    for (let i = 0; i < empty.levels; i++) z = await poseidon([z, z]);
+    expect(empty.root).toBe(z);
   });
-});
 
-describe("generateProof", () => {
-  it("returns valid ABI-encoded bytes", () => {
-    const proof = generateProof(123n, 0, [1n, 2n, 3n]);
-    expect(proof).toMatch(/^0x[0-9a-f]+$/i);
+  it("a one-leaf path reconstructs the root", async () => {
+    const note = await fromSecrets(7n, 8n);
+    const tree = await MerkleTree.build([note.commitment]);
+    const { pathElements, pathIndices } = tree.proof(0);
 
-    const decoded = ethers.AbiCoder.defaultAbiCoder().decode(
-      ["uint256", "uint256", "uint256[]"],
-      proof
-    );
-    expect(decoded[0]).toBe(123n);
-    expect(decoded[1]).toBe(0n);
-    expect(decoded[2]).toEqual([1n, 2n, 3n]);
+    let cur = note.commitment;
+    for (let i = 0; i < tree.levels; i++) {
+      cur = pathIndices[i]
+        ? await poseidon([pathElements[i], cur])
+        : await poseidon([cur, pathElements[i]]);
+    }
+    expect(cur).toBe(tree.root);
+  });
+
+  it("distinguishes two leaves' paths", async () => {
+    const n0 = await fromSecrets(1n, 1n);
+    const n1 = await fromSecrets(2n, 2n);
+    const tree = await MerkleTree.build([n0.commitment, n1.commitment]);
+    expect(tree.proof(0).pathElements[0]).toBe(n1.commitment);
+    expect(tree.proof(1).pathElements[0]).toBe(n0.commitment);
   });
 });

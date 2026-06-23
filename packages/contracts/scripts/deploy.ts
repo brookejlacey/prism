@@ -1,66 +1,87 @@
 import { ethers } from "hardhat";
+import * as fs from "fs";
+import * as path from "path";
+
+// Tree depth — must match Withdraw(20) in withdraw.circom and the SDK's TREE_LEVELS.
+const TREE_LEVELS = 20;
+// Vaults to stand up, in token-decimal units (18-decimal mock USDC).
+const DENOMINATIONS = ["0.1", "1", "10", "100"];
 
 async function main() {
   const [deployer] = await ethers.getSigners();
-  console.log("Deploying Prism Protocol with account:", deployer.address);
+  const net = await ethers.provider.getNetwork();
+  console.log(`Network chainId=${net.chainId}, deployer=${deployer.address}`);
 
-  // 1. Deploy PVM Crypto Core Fallback (EVM implementation)
-  console.log("\n--- Deploying PVM Crypto Core Fallback ---");
-  const PVMCore = await ethers.getContractFactory("PVMCryptoCoreFallback");
-  const pvmCore = await PVMCore.deploy();
-  await pvmCore.waitForDeployment();
-  const pvmCoreAddr = await pvmCore.getAddress();
-  console.log("PVMCryptoCoreFallback:", pvmCoreAddr);
+  // 1. Poseidon(t=3) library — shared hash for the Merkle tree.
+  const Poseidon = await ethers.getContractFactory("PoseidonT3");
+  const poseidon = await Poseidon.deploy();
+  await poseidon.waitForDeployment();
+  const poseidonAddr = await poseidon.getAddress();
+  console.log("PoseidonT3:       ", poseidonAddr);
 
-  // 2. Deploy Mock USDC for testing
-  console.log("\n--- Deploying Mock USDC ---");
-  const MockToken = await ethers.getContractFactory("MockERC20");
-  const usdc = await MockToken.deploy("USD Coin", "USDC", 18);
+  // 2. Groth16 verifier (generated from withdraw.circom).
+  const Verifier = await ethers.getContractFactory("Groth16Verifier");
+  const verifier = await Verifier.deploy();
+  await verifier.waitForDeployment();
+  const verifierAddr = await verifier.getAddress();
+  console.log("Groth16Verifier:  ", verifierAddr);
+
+  // 3. Mock USDC for the demo pools.
+  const Mock = await ethers.getContractFactory("MockERC20");
+  const usdc = await Mock.deploy("USD Coin", "USDC", 18);
   await usdc.waitForDeployment();
   const usdcAddr = await usdc.getAddress();
-  console.log("Mock USDC:", usdcAddr);
+  console.log("MockERC20 (USDC): ", usdcAddr);
+  await (await usdc.mint(deployer.address, ethers.parseEther("100000"))).wait();
 
-  // 3. Deploy PrismVault (1 USDC denomination)
-  console.log("\n--- Deploying PrismVault (1 USDC) ---");
-  const PrismVault = await ethers.getContractFactory("PrismVault");
-  const vault = await PrismVault.deploy(usdcAddr, ethers.parseEther("1"), pvmCoreAddr);
-  await vault.waitForDeployment();
-  const vaultAddr = await vault.getAddress();
-  console.log("PrismVault (1 USDC):", vaultAddr);
-
-  // 4. Deploy PrismRouter
-  console.log("\n--- Deploying PrismRouter ---");
-  const PrismRouter = await ethers.getContractFactory("PrismRouter");
-  const router = await PrismRouter.deploy(pvmCoreAddr);
+  // 4. Router.
+  const Router = await ethers.getContractFactory("PrismRouter");
+  const router = await Router.deploy();
   await router.waitForDeployment();
   const routerAddr = await router.getAddress();
-  console.log("PrismRouter:", routerAddr);
+  console.log("PrismRouter:      ", routerAddr);
 
-  // 5. Deploy CrossVMBridge
-  console.log("\n--- Deploying CrossVMBridge ---");
-  const CrossVMBridge = await ethers.getContractFactory("CrossVMBridge");
-  const bridge = await CrossVMBridge.deploy(pvmCoreAddr);
-  await bridge.waitForDeployment();
-  const bridgeAddr = await bridge.getAddress();
-  console.log("CrossVMBridge:", bridgeAddr);
-
-  // 6. Register vault with router
-  console.log("\n--- Configuring Router ---");
-  await router.registerVault(usdcAddr, ethers.parseEther("1"), vaultAddr);
-  console.log("Registered 1 USDC vault with router");
-
-  // 7. Add deployer as trusted relayer on bridge
-  await bridge.addRelayer(deployer.address);
-  console.log("Added deployer as trusted relayer");
-
-  console.log("\n=== Deployment Complete ===");
-  console.log({
-    pvmCore: pvmCoreAddr,
-    usdc: usdcAddr,
-    vault: vaultAddr,
-    router: routerAddr,
-    bridge: bridgeAddr,
+  // 5. One vault per denomination, registered with the router.
+  const Vault = await ethers.getContractFactory("PrismVault", {
+    libraries: { PoseidonT3: poseidonAddr },
   });
+  const vaultAddrs: Record<string, string> = {};
+  for (const d of DENOMINATIONS) {
+    const denom = ethers.parseEther(d);
+    const vault = await Vault.deploy(verifierAddr, usdcAddr, denom, TREE_LEVELS);
+    await vault.waitForDeployment();
+    const addr = await vault.getAddress();
+    vaultAddrs[d] = addr;
+    await (await router.registerVault(usdcAddr, denom, addr)).wait();
+    console.log(`PrismVault ${d.padStart(5)} USDC:`, addr);
+  }
+
+  // Default dashboard vault = the 1 USDC pool.
+  const addresses = {
+    poseidon: poseidonAddr,
+    verifier: verifierAddr,
+    usdc: usdcAddr,
+    router: routerAddr,
+    vault: vaultAddrs["1"],
+  };
+
+  // Write dashboard env.
+  const dashEnv = path.resolve(__dirname, "../../dashboard/.env.local");
+  fs.writeFileSync(
+    dashEnv,
+    [
+      `# Auto-generated by deploy.ts on chainId ${net.chainId}`,
+      `NEXT_PUBLIC_ROUTER_ADDRESS=${addresses.router}`,
+      `NEXT_PUBLIC_VAULT_ADDRESS=${addresses.vault}`,
+      `NEXT_PUBLIC_VERIFIER_ADDRESS=${addresses.verifier}`,
+      `NEXT_PUBLIC_POSEIDON_ADDRESS=${addresses.poseidon}`,
+      `NEXT_PUBLIC_USDC_ADDRESS=${addresses.usdc}`,
+      "",
+    ].join("\n"),
+    "utf-8"
+  );
+  console.log(`\nWrote ${dashEnv}`);
+  console.log("\nDeployment complete:", addresses);
 }
 
 main().catch((error) => {
