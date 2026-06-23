@@ -2,7 +2,7 @@
   "name": "prism-protocol",
   "version": "0.1.0",
   "private": true,
-  "description": "Cross-VM Privacy-Preserving DeFi Router for Polkadot Hub",
+  "description": "A zk-SNARK shielded pool on Polkadot Hub",
   "scripts": {
     "build": "turbo run build",
     "test": "turbo run test",
